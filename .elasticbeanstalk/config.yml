@@ -1,15 +1,10 @@
 branch-defaults:
-  default:
-    environment: null
   master:
-    environment: spam-dev
-environment-defaults:
-  spam-dev:
-    branch: master
-    repository: tp-spam-app
+    environment: tp-spam-app-dev
+    group_suffix: null
 global:
-  application_name: spam
-  branch: master
+  application_name: tp-spam-app
+  branch: null
   default_ec2_keyname: ssh_ec2_django_udesa
   default_platform: Python 3.7 running on 64bit Amazon Linux 2
   default_region: us-east-1
@@ -18,6 +13,6 @@ global:
   platform_name: null
   platform_version: null
   profile: null
-  repository: tp-spam-app
+  repository: null
   sc: git
   workspace_type: Application
