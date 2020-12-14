@@ -1,7 +1,9 @@
 from django.apps import AppConfig
 import joblib
+import os
 
 
 class SpamAppConfig(AppConfig):
     name = 'spam_app'
-    #model = joblib.load('/Users/antonellaschiavoni/Antonella/Maestria/ProgramacionParaGrandesVolumenesDeDatos/tp-final/tp-final/spam/spam_app/spam-model/pipe_model.pkl')
+    model_path = os.path.abspath(os.path.join('spam-model', 'pipe_model.pkl'))
+    model = joblib.load(model_path)
