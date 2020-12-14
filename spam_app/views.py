@@ -69,7 +69,7 @@ class history(APIView):
                 text = pred.text_email
                 created_at = pred.created_at
                 prediction = 'SPAM' if pred.prediction == 1 else 'HAM'
-                results.append({'text': text, 'created_at': created_at, 'prediction': prediction})
+                results.append({'text': text, 'result': prediction, 'created_at': created_at})
                 counter += 1
             else:
                 break
