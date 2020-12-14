@@ -52,6 +52,8 @@ class quota_info(APIView):
         user = User.objects.filter(username=request.user)[0] # add check if list is empty
         user_quota = UserQuota.objects.filter(user=user)[0] # add check if list is empty
         quota_processed =  user_quota.quota_origin - user_quota.quota_available
+        user_quota.quota_available  = user_quota.quota_available - 1
+        user_quota.save()
         response = {'procesados': quota_processed, 'disponible': user_quota.quota_available}
         return JsonResponse(response)
 
