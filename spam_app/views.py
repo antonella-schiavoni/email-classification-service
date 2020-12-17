@@ -13,37 +13,36 @@ from django.contrib.auth.models import User
 class process_email(APIView):
 
     def post(self, request):
-        if request.method == 'POST':
-            # filter users from db by name
-            user = User.objects.filter(username=request.user)[0]
-            user_quota = UserQuota.objects.filter(user=user)[0]
-            #if request.user == users[0].name: # Luego habria que ver como validar una vez que tengamos hecha la autenticacion
-            if user_quota.quota_available >= 1:
-                text =  [request.POST.get('text')]
-                logging.info(f"Email text: {text}")
-                # predict method used to get the prediction
-                if text:
-                    prediction = SpamAppConfig.model.predict(text)[0]
-                    # parse prediction to True/False
-                    result = 'SPAM' if prediction == 1 else 'HAM'
-                    # save data into the DB
-                    prediction_obj = Predictions.objects.create(user=user,
-                                                                text_email=text,
-                                                                prediction=result)
-                    prediction_obj.save()
-                    
-                    user_quota.quota_available  = user_quota.quota_available - 1
-                    user_quota.save()
-                    user.save()
-                    # build response as dict
-                    response = {"result": result, 'status': 'ok'}
-                    # returning JSON response
-                    return JsonResponse(response)
-                else:
-                    raise ValidationError("Text field is required")
-            else: 
-                response = {"status":"fail","message":"No quota left"}
+        # filter users from db by name
+        user = User.objects.filter(username=request.user)[0]
+        user_quota = UserQuota.objects.filter(user=user)[0]
+        #if request.user == users[0].name: # Luego habria que ver como validar una vez que tengamos hecha la autenticacion
+        if user_quota.quota_available >= 1:
+            text =  [request.POST.get('text')]
+            logging.info(f"Email text: {text}")
+            # predict method used to get the prediction
+            if text:
+                prediction = SpamAppConfig.model.predict(text)[0]
+                # parse prediction to True/False
+                result = 'SPAM' if prediction == 1 else 'HAM'
+                # save data into the DB
+                prediction_obj = Predictions.objects.create(user=user,
+                                                            text_email=text,
+                                                            prediction=result)
+                prediction_obj.save()
+                
+                user_quota.quota_available  = user_quota.quota_available - 1
+                user_quota.save()
+                user.save()
+                # build response as dict
+                response = {"result": result, 'status': 'ok'}
+                # returning JSON response
                 return JsonResponse(response)
+            else:
+                raise ValidationError("Text field is required")
+        else: 
+            response = {"status":"fail","message":"No quota left"}
+            return JsonResponse(response)
 
 
 class quota_info(APIView):
