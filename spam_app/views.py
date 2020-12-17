@@ -9,7 +9,6 @@ from .apps import SpamAppConfig
 from rest_framework.response import Response
 import logging
 from django.contrib.auth.models import User
-from rest_framework import filters
 
 class process_email(APIView):
 
@@ -19,40 +18,38 @@ class process_email(APIView):
             user = User.objects.filter(username=request.user)[0]
             user_quota = UserQuota.objects.filter(user=user)[0]
             #if request.user == users[0].name: # Luego habria que ver como validar una vez que tengamos hecha la autenticacion
-            if user_quota.quota_available > 0:
+            if user_quota.quota_available >= 1:
                 text =  [request.POST.get('text')]
                 logging.info(f"Email text: {text}")
                 # predict method used to get the prediction
                 if text:
                     prediction = SpamAppConfig.model.predict(text)[0]
                     # parse prediction to True/False
-                    result = True if prediction == 1 else False
+                    result = 'SPAM' if prediction == 1 else 'HAM'
                     # save data into the DB
                     prediction_obj = Predictions.objects.create(user=user,
                                                                 text_email=text,
                                                                 prediction=result)
                     prediction_obj.save()
                     
-                    quota_available = user_quota.quota_available - 1
-                    user_quota.quota_available = quota_available
+                    user_quota.quota_available  = user_quota.quota_available - 1
+                    user_quota.save()
                     user.save()
                     # build response as dict
-                    response = {"spam": result}
+                    response = {"result": result, 'status': 'ok'}
                     # returning JSON response
                     return JsonResponse(response)
                 else:
                     raise ValidationError("Text field is required")
             else: 
-                response = {"status": 'Fail. No quota available'}
+                response = {"status":"fail","message":"No quota left"}
                 return JsonResponse(response)
 
 
 class quota_info(APIView):
-    def post(self, request):
+    def get(self, request):
         user = User.objects.filter(username=request.user)[0] # add check if list is empty
         user_quota = UserQuota.objects.filter(user=user)[0] # add check if list is empty
-        user_quota.quota_available  = user_quota.quota_available - 1
-        user_quota.save()
         quota_processed =  user_quota.quota_origin - user_quota.quota_available
         response = {'procesados': quota_processed, 'disponible': user_quota.quota_available}
         return JsonResponse(response)
@@ -60,7 +57,6 @@ class quota_info(APIView):
 
 class history(APIView):
     def get(self, request, n_emails: None):
-        print(f"n emails: {n_emails}")
         processed_emails = Predictions.objects.all().order_by('-created_at')
         results = []
         counter = 0
