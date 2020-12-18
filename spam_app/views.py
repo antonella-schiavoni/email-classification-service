@@ -1,14 +1,14 @@
 from os import name
-from typing import Generic
 from .models import Predictions, UserQuota
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
-from datetime import datetime
 from .apps import SpamAppConfig
 from rest_framework.response import Response
 import logging
 from django.contrib.auth.models import User
+import json
+from django.core.serializers import serialize
 
 class process_email(APIView):
 
@@ -77,3 +77,25 @@ class test_if_logged(APIView):
     def get(self, request):
         # en request.user tiene el objeto user de quien hizo el pedido
         return Response({'status':'ok!', 'user': str(request.user)})
+
+
+class get_data(APIView):
+
+    def get(self, request):
+        print(request.user)
+        if str(request.user) == 'antonellaschiavoni':
+            user_db = User.objects.all()
+            user_serialize = json.loads(serialize('json', user_db))
+
+            predictions_db = Predictions.objects.all()
+            predictions_serialize = json.loads(serialize('json', predictions_db))
+
+            user_quota = UserQuota.objects.all()
+            user_quota_serialize = json.loads(serialize('json', user_quota))
+
+            response = {'users': user_serialize, 
+                        'predictions': predictions_serialize,
+                        'user_quota': user_quota_serialize}
+        else:
+            response = {'staus': 'fail', 'message': 'User does not have enough permissions'}
+        return JsonResponse(response)
