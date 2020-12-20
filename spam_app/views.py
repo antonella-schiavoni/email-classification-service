@@ -84,15 +84,12 @@ class get_data(APIView):
     def get(self, request):
         if str(request.user) == 'antonellaschiavoni':
             users_param = request.query_params.get('users')
-            print(f"############### {users_param}")
             if users_param:
                 users_list = users_param.split('|')
-                print(f"############### {users_list}")
                 users_data = []
                 prediction_data = []
                 user_quota_data = []
                 for user in users_list:
-                    print(f"############### {user}")
                     user_db = User.objects.filter(username=user)
                     user_serialize = json.loads(serialize('json', user_db))
 
