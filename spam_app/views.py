@@ -82,20 +82,54 @@ class test_if_logged(APIView):
 class get_data(APIView):
 
     def get(self, request):
-        print(request.user)
         if str(request.user) == 'antonellaschiavoni':
-            user_db = User.objects.all()
-            user_serialize = json.loads(serialize('json', user_db))
+            users_param = request.query_params.get('users')
+            print(f"############### {users_param}")
+            if users_param:
+                users_list = users_param.split('|')
+                print(f"############### {users_list}")
+                results = []
+                for user in users_list:
+                    print(f"############### {user}")
+                    user_db = User.objects.filter(username=user)
+                    user_serialize = json.loads(serialize('json', user_db))
 
-            predictions_db = Predictions.objects.all()
-            predictions_serialize = json.loads(serialize('json', predictions_db))
+                    predictions_db = Predictions.objects.filter(user=user_db[0])
+                    predictions_serialize = json.loads(serialize('json', predictions_db))
 
-            user_quota = UserQuota.objects.all()
-            user_quota_serialize = json.loads(serialize('json', user_quota))
+                    user_quota = UserQuota.objects.filter(user=user_db[0])
+                    user_quota_serialize = json.loads(serialize('json', user_quota))
 
-            response = {'users': user_serialize, 
-                        'predictions': predictions_serialize,
-                        'user_quota': user_quota_serialize}
+                    results.append({'username': user,
+                                    'info': {'users': user_serialize, 
+                                             'predictions': predictions_serialize,
+                                             'user_quota': user_quota_serialize}})
+                response = {'results': results}
+            else:
+                user_db = User.objects.all()
+                user_serialize = json.loads(serialize('json', user_db))
+
+                predictions_db = Predictions.objects.all()
+                predictions_serialize = json.loads(serialize('json', predictions_db))
+
+                user_quota = UserQuota.objects.all()
+                user_quota_serialize = json.loads(serialize('json', user_quota))
+
+                response = {
+                    'results': [
+                        {
+                        'username': 'all',
+                        'info':{
+                            'users': user_serialize, 
+                            'predictions': predictions_serialize,
+                            'user_quota': user_quota_serialize
+                            }
+                        }
+                    ]
+                }
+                    
+                    
+                    
         else:
             response = {'staus': 'fail', 'message': 'User does not have enough permissions'}
         return JsonResponse(response)
