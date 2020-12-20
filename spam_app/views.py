@@ -88,7 +88,9 @@ class get_data(APIView):
             if users_param:
                 users_list = users_param.split('|')
                 print(f"############### {users_list}")
-                results = []
+                users_data = []
+                prediction_data = []
+                user_quota_data = []
                 for user in users_list:
                     print(f"############### {user}")
                     user_db = User.objects.filter(username=user)
@@ -100,11 +102,11 @@ class get_data(APIView):
                     user_quota = UserQuota.objects.filter(user=user_db[0])
                     user_quota_serialize = json.loads(serialize('json', user_quota))
 
-                    results.append({'username': user,
-                                    'info': {'users': user_serialize, 
-                                             'predictions': predictions_serialize,
-                                             'user_quota': user_quota_serialize}})
-                response = {'results': results}
+                    users_data.append(user_serialize)
+                    prediction_data.append(predictions_serialize)
+                    user_quota_data.append(user_quota_serialize)
+
+                response = {'users': users_data, 'predictions': prediction_data, 'user_quota': user_quota_data}
             else:
                 user_db = User.objects.all()
                 user_serialize = json.loads(serialize('json', user_db))
@@ -116,20 +118,10 @@ class get_data(APIView):
                 user_quota_serialize = json.loads(serialize('json', user_quota))
 
                 response = {
-                    'results': [
-                        {
-                        'username': 'all',
-                        'info':{
                             'users': user_serialize, 
                             'predictions': predictions_serialize,
                             'user_quota': user_quota_serialize
-                            }
-                        }
-                    ]
-                }
-                    
-                    
-                    
+                            }       
         else:
             response = {'staus': 'fail', 'message': 'User does not have enough permissions'}
         return JsonResponse(response)
