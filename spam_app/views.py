@@ -80,9 +80,8 @@ class test_if_logged(APIView):
 class get_data(APIView):
 
     def _serialize(self, db_object):
-        object_serialized = json.loads(serialize('json', db_object))
-        if object_serialized:
-            return object_serialized[0]
+        return json.loads(serialize('json', db_object))
+ 
 
     def get(self, request):
         user = User.objects.filter(username=request.user)[0]
