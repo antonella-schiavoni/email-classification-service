@@ -81,6 +81,11 @@ class test_if_logged(APIView):
 
 class get_data(APIView):
 
+    def _serialize(self, db_object):
+        object_serialized = json.loads(serialize('json', db_object))
+        if object_serialized:
+            return object_serialized[0]
+
     def get(self, request):
         if str(request.user) == 'antonellaschiavoni':
             users_param = request.query_params.get('users')
@@ -91,13 +96,13 @@ class get_data(APIView):
                 user_quota_data = []
                 for user in users_list:
                     user_db = User.objects.filter(username=user)
-                    user_serialize = json.loads(serialize('json', user_db))
+                    user_serialize = self._serialize(user_db)
 
                     predictions_db = Predictions.objects.filter(user=user_db[0])
-                    predictions_serialize = json.loads(serialize('json', predictions_db))
+                    predictions_serialize = self._serialize(predictions_db)
 
                     user_quota = UserQuota.objects.filter(user=user_db[0])
-                    user_quota_serialize = json.loads(serialize('json', user_quota))
+                    user_quota_serialize = self._serialize(user_quota)
 
                     users_data.append(user_serialize)
                     prediction_data.append(predictions_serialize)
