@@ -3,4 +3,3 @@ from django.contrib import admin
 
 admin.site.register(Predictions)
 admin.site.register(UserQuota)
-# Register your models here.
