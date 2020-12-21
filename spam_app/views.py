@@ -9,6 +9,7 @@ import logging
 from django.contrib.auth.models import User
 import json
 from django.core.serializers import serialize
+from rest_framework import status
 
 class process_email(APIView):
 
@@ -16,7 +17,6 @@ class process_email(APIView):
         # filter users from db by name
         user = User.objects.filter(username=request.user)[0]
         user_quota = UserQuota.objects.filter(user=user)[0]
-        #if request.user == users[0].name: # Luego habria que ver como validar una vez que tengamos hecha la autenticacion
         if user_quota.quota_available >= 1:
             text =  [request.POST.get('text')]
             logging.info(f"Email text: {text}")
@@ -47,8 +47,8 @@ class process_email(APIView):
 
 class quota_info(APIView):
     def get(self, request):
-        user = User.objects.filter(username=request.user)[0] # add check if list is empty
-        user_quota = UserQuota.objects.filter(user=user)[0] # add check if list is empty
+        user = User.objects.filter(username=request.user)[0]
+        user_quota = UserQuota.objects.filter(user=user)[0]
         quota_processed =  user_quota.quota_origin - user_quota.quota_available
         response = {'procesados': quota_processed, 'disponible': user_quota.quota_available}
         return JsonResponse(response)
@@ -75,7 +75,6 @@ class history(APIView):
 class test_if_logged(APIView):
 
     def get(self, request):
-        # en request.user tiene el objeto user de quien hizo el pedido
         return Response({'status':'ok!', 'user': str(request.user)})
 
 
@@ -87,7 +86,8 @@ class get_data(APIView):
             return object_serialized[0]
 
     def get(self, request):
-        if str(request.user) == 'antonellaschiavoni':
+        user = User.objects.filter(username=request.user)[0]
+        if user.is_superuser == True:
             users_param = request.query_params.get('users')
             if users_param:
                 users_list = users_param.split('|')
@@ -111,19 +111,30 @@ class get_data(APIView):
                 response = {'users': users_data, 'predictions': prediction_data, 'user_quota': user_quota_data}
             else:
                 user_db = User.objects.all()
-                user_serialize = json.loads(serialize('json', user_db))
+                user_serialize = self._serialize(user_db)
 
                 predictions_db = Predictions.objects.all()
-                predictions_serialize = json.loads(serialize('json', predictions_db))
+                predictions_serialize = self._serialize(predictions_db)
 
                 user_quota = UserQuota.objects.all()
-                user_quota_serialize = json.loads(serialize('json', user_quota))
+                user_quota_serialize = self._serialize(user_quota)
 
                 response = {
                             'users': user_serialize, 
                             'predictions': predictions_serialize,
                             'user_quota': user_quota_serialize
                             }       
+                return JsonResponse(response)
         else:
-            response = {'staus': 'fail', 'message': 'User does not have enough permissions'}
-        return JsonResponse(response)
+            return JsonResponse({'staus': 'fail', 'message': 'User does not have enough permissions'}, status=status.HTTP_403_FORBIDDEN)
+
+class get_users(APIView):
+
+    def get(self, request):
+        user = User.objects.filter(username=request.user)[0]
+        if user.is_superuser == True:
+            user_all = User.objects.all()
+            all_username = [user.username for user in user_all]
+            return JsonResponse({'usernames': all_username})
+        else:
+            return JsonResponse({'staus': 'fail', 'message': 'User does not have enough permissions'}, status=status.HTTP_403_FORBIDDEN)

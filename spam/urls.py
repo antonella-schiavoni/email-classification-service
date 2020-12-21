@@ -26,4 +26,5 @@ urlpatterns = [
     path('quota_info/', views.quota_info.as_view()),
     path('history/<n_emails>/', views.history.as_view()),
     path('get_data/', views.get_data.as_view()),
+    path('get_users/', views.get_users.as_view()),
 ]
