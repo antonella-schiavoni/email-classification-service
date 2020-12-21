@@ -1,3 +1,6 @@
+from os import O_NDELAY
+
+from django.http.response import Http404
 from .models import Predictions, UserQuota
 from django.http import JsonResponse
 from rest_framework.views import APIView
@@ -80,7 +83,11 @@ class test_if_logged(APIView):
 class get_data(APIView):
 
     def _serialize(self, db_object):
-        return json.loads(serialize('json', db_object))
+        object_serialized = json.loads(serialize('json', db_object))
+        if object_serialized:
+            return object_serialized
+        else:
+            return []
  
 
     def get(self, request):
@@ -94,6 +101,8 @@ class get_data(APIView):
                 user_quota_data = []
                 for user in users_list:
                     user_db = User.objects.filter(username=user)
+                    if not user_db:
+                        return JsonResponse({'message': f'User {user} does not exist'}, status=status.HTTP_404_NOT_FOUND)
                     user_serialize = self._serialize(user_db)
 
                     predictions_db = Predictions.objects.filter(user=user_db[0])
@@ -103,23 +112,23 @@ class get_data(APIView):
                     user_quota_serialize = self._serialize(user_quota)
 
                     if user_serialize:
-                        users_data.append(user_serialize)
+                        users_data += user_serialize
                     if predictions_serialize:
-                        prediction_data.append(predictions_serialize)
+                        prediction_data += predictions_serialize
                     if user_quota_serialize:
-                        user_quota_data.append(user_quota_serialize)
+                        user_quota_data += user_quota_serialize
 
                 response = {'users': users_data, 'predictions': prediction_data, 'user_quota': user_quota_data}
                 return JsonResponse(response)
             else:
                 user_db = User.objects.all()
-                user_serialize = self._serialize(user_db)
+                user_serialize = json.loads(serialize('json', user_db))
 
                 predictions_db = Predictions.objects.all()
-                predictions_serialize = self._serialize(predictions_db)
+                predictions_serialize = json.loads(serialize('json', predictions_db))
 
                 user_quota = UserQuota.objects.all()
-                user_quota_serialize = self._serialize(user_quota)
+                user_quota_serialize = json.loads(serialize('json', user_quota))
 
                 response = {
                             'users': user_serialize, 
