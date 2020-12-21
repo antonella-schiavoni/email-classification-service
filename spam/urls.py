@@ -20,7 +20,7 @@ from rest_framework_jwt.views import obtain_jwt_token
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('process_email', views.process_email.as_view()),
+    path('process_email/', views.process_email.as_view()),
     path('api-token-auth/', obtain_jwt_token),
     path('test_if_logged', views.test_if_logged.as_view()),
     path('quota_info/', views.quota_info.as_view()),

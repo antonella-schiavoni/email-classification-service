@@ -103,11 +103,15 @@ class get_data(APIView):
                     user_quota = UserQuota.objects.filter(user=user_db[0])
                     user_quota_serialize = self._serialize(user_quota)
 
-                    users_data.append(user_serialize)
-                    prediction_data.append(predictions_serialize)
-                    user_quota_data.append(user_quota_serialize)
+                    if user_serialize:
+                        users_data.append(user_serialize)
+                    if predictions_serialize:
+                        prediction_data.append(predictions_serialize)
+                    if user_quota_serialize:
+                        user_quota_data.append(user_quota_serialize)
 
                 response = {'users': users_data, 'predictions': prediction_data, 'user_quota': user_quota_data}
+                return JsonResponse(response)
             else:
                 user_db = User.objects.all()
                 user_serialize = self._serialize(user_db)
