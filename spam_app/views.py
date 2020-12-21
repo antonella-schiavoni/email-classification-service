@@ -1,4 +1,3 @@
-from os import name
 from .models import Predictions, UserQuota
 from django.http import JsonResponse
 from rest_framework.views import APIView
