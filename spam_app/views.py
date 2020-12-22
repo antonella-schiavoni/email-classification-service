@@ -58,18 +58,14 @@ class quota_info(APIView):
 
 class history(APIView):
     def get(self, request, n_emails: None):
-        processed_emails = Predictions.objects.all().order_by('-created_at')
+        user = User.objects.filter(username=request.user)[0]
+        processed_emails = Predictions.objects.filter(user=user).order_by('-created_at')[:int(n_emails)]
         results = []
-        counter = 0
         for pred in processed_emails:
-            if counter < int(n_emails):
-                text = pred.text_email
-                created_at = pred.created_at
-                prediction = 'SPAM' if pred.prediction == 1 else 'HAM'
-                results.append({'text': text, 'result': prediction, 'created_at': created_at})
-                counter += 1
-            else:
-                break
+            text = pred.text_email
+            created_at = pred.created_at
+            prediction = 'SPAM' if pred.prediction == 1 else 'HAM'
+            results.append({'text': text, 'result': prediction, 'created_at': created_at})
         response = {'results': results}
         return JsonResponse(response)
 
