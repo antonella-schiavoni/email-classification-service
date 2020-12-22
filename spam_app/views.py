@@ -75,7 +75,7 @@ class history(APIView):
 class test_if_logged(APIView):
 
     def get(self, request):
-        return Response({'status':'ok!', 'user': str(request.user)})
+        return JsonResponse({'status':'ok!', 'user': str(request.user)})
 
 
 class get_data(APIView):
