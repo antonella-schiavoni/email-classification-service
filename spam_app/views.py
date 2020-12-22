@@ -149,3 +149,15 @@ class get_users(APIView):
             return JsonResponse({'usernames': all_username})
         else:
             return JsonResponse({'staus': 'fail', 'message': 'User does not have enough permissions'}, status=status.HTTP_403_FORBIDDEN)
+
+class health(APIView):
+
+    def get(self, request):
+        try:
+            all_users = User.objects.all()
+            if len(all_users) > 0: 
+                return JsonResponse({'status': 'ok'})
+            else:
+                return JsonResponse({'status': 'fail', 'message': 'No users found in the database'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except:
+            return JsonResponse({'status': 'fail', 'message': 'Fail to access to database'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
