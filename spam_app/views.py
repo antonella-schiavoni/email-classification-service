@@ -1,6 +1,3 @@
-from os import O_NDELAY
-
-from django.http.response import Http404
 from .models import Predictions, UserQuota
 from django.http import JsonResponse
 from rest_framework.views import APIView
@@ -16,32 +13,30 @@ from rest_framework import status
 class process_email(APIView):
 
     def post(self, request):
+
+        # validation
+        text = [request.POST.get('text')]
+        if not text[0]:
+            raise ValidationError("text field is required")
+
         # filter users from db by name
         user = User.objects.filter(username=request.user)[0]
         user_quota = UserQuota.objects.filter(user=user)[0]
         if user_quota.quota_available >= 1:
-            text =  [request.POST.get('text')]
-            logging.info(f"Email text: {text}")
             # predict method used to get the prediction
-            if text:
-                prediction = SpamAppConfig.model.predict(text)[0]
-                # parse prediction to True/False
-                result = 'SPAM' if prediction == 1 else 'HAM'
-                # save data into the DB
-                prediction_obj = Predictions.objects.create(user=user,
-                                                            text_email=text,
-                                                            prediction=result)
-                prediction_obj.save()
-                
-                user_quota.quota_available  = user_quota.quota_available - 1
-                user_quota.save()
-                user.save()
-                # build response as dict
-                response = {"result": result, 'status': 'ok'}
-                # returning JSON response
-                return JsonResponse(response)
-            else:
-                raise ValidationError("Text field is required")
+            prediction = SpamAppConfig.model.predict(text)[0]
+            # parse prediction to True/False
+            result = 'SPAM' if prediction == 1 else 'HAM'
+            # save data into the DB
+            prediction_obj = Predictions.objects.create(user=user, text_email=text, prediction=result)
+            prediction_obj.save()
+            user_quota.quota_available  = user_quota.quota_available - 1
+            user_quota.save()
+            user.save()
+            # build response as dict
+            response = {"result": result, 'status': 'ok'}
+            # returning JSON response
+            return JsonResponse(response)
         else: 
             response = {"status":"fail","message":"No quota left"}
             return JsonResponse(response)
@@ -85,7 +80,6 @@ class get_data(APIView):
         else:
             return []
  
-
     def get(self, request):
         user = User.objects.filter(username=request.user)[0]
         if user.is_superuser == True:
