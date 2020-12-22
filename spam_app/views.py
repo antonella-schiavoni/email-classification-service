@@ -43,26 +43,33 @@ class process_email(APIView):
 
 
 class quota_info(APIView):
+
     def get(self, request):
         user = User.objects.filter(username=request.user)[0]
         user_quota = UserQuota.objects.filter(user=user)[0]
         quota_processed =  user_quota.quota_origin - user_quota.quota_available
-        response = {'procesados': quota_processed, 'disponible': user_quota.quota_available}
-        return JsonResponse(response)
+        return JsonResponse({'procesados': quota_processed, 'disponible': user_quota.quota_available})
 
 
 class history(APIView):
-    def get(self, request, n_emails: None):
+
+    def get(self, request, n_emails):
+
+        # validation
+        try:
+            email_limit = int(n_emails)
+        except:
+            raise ValidationError("A number was expected in the URL.")
+
         user = User.objects.filter(username=request.user)[0]
-        processed_emails = Predictions.objects.filter(user=user).order_by('-created_at')[:int(n_emails)]
+        processed_emails = Predictions.objects.filter(user=user).order_by('-created_at')[:email_limit]
         results = []
         for pred in processed_emails:
             text = pred.text_email
             created_at = pred.created_at
             prediction = 'SPAM' if pred.prediction == 1 else 'HAM'
             results.append({'text': text, 'result': prediction, 'created_at': created_at})
-        response = {'results': results}
-        return JsonResponse(response)
+        return JsonResponse({'results': results})
 
 
 class test_if_logged(APIView):
